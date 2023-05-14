@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
-# 
+#
 # @file   analysis.py
 # @brief  Plotting and analysis tool to determine IMU parameters.
 # @author Russell Buchanan
-# 
+#
 
 import argparse
 import csv
@@ -97,10 +97,9 @@ with open(args.data) as input_file:
 white_noise_break_point = np.where(period == 10)[0][0]
 random_rate_break_point = np.where(period == 10)[0][0]
 
-
-accel_wn_intercept_x, xfit_wn = get_intercept(period[0:white_noise_break_point], acceleration[0:white_noise_break_point,0], -0.5, 1.0)
-accel_wn_intercept_y, yfit_wn = get_intercept(period[0:white_noise_break_point], acceleration[0:white_noise_break_point,1], -0.5, 1.0)
-accel_wn_intercept_z, zfit_wn = get_intercept(period[0:white_noise_break_point], acceleration[0:white_noise_break_point,2], -0.5, 1.0)
+accel__x, xfit_wn = get_intercept(period[0:white_noise_break_point], acceleration[0:white_noise_break_point,0], -0.5, 1.0)
+accel__y, yfit_wn = get_intercept(period[0:white_noise_break_point], acceleration[0:white_noise_break_point,1], -0.5, 1.0)
+accel__z, zfit_wn = get_intercept(period[0:white_noise_break_point], acceleration[0:white_noise_break_point,2], -0.5, 1.0)
 
 accel_rr_intercept_x, xfit_rr = get_intercept(period, acceleration[:,0], 0.5, 3.0)
 accel_rr_intercept_y, yfit_rr = get_intercept(period, acceleration[:,1], 0.5, 3.0)
@@ -117,25 +116,27 @@ accel_min_z_index = np.argmin(acceleration[:,2])
 
 yaml_file = open("imu.yaml", "w")
 
-print("ACCELEROMETER:")
-print(f"X Velocity Random Walk: {accel_wn_intercept_x: .5f} m/s/sqrt(s) {accel_wn_intercept_x*60: .5f} m/s/sqrt(hr)")
-print(f"Y Velocity Random Walk: {accel_wn_intercept_y: .5f} m/s/sqrt(s) {accel_wn_intercept_y*60: .5f} m/s/sqrt(hr)")
-print(f"Z Velocity Random Walk: {accel_wn_intercept_z: .5f} m/s/sqrt(s) {accel_wn_intercept_z*60: .5f} m/s/sqrt(hr)")
+g = 9.80665 # from airsim EarthUtils.cpp
 
-print(f"X Bias Instability: {accel_min_x: .5f} m/s^2 {accel_min_x*3600*3600: .5f} m/hr^2")
-print(f"Y Bias Instability: {accel_min_y: .5f} m/s^2 {accel_min_y*3600*3600: .5f} m/hr^2")
-print(f"Z Bias Instability: {accel_min_z: .5f} m/s^2 {accel_min_z*3600*3600: .5f} m/hr^2")
+print("ACCELEROMETER:")
+print(f"X Velocity Random Walk: {accel__x: .5f} m/s/sqrt(s)  {accel_wn_intercept_x*60: .5f} m/s/sqrt(hr)  {accel_wn_intercept_x*1e3/g: .5f} mg·sqrt(s)")
+print(f"Y Velocity Random Walk: {accel__y: .5f} m/s/sqrt(s)  {accel_wn_intercept_y*60: .5f} m/s/sqrt(hr)  {accel_wn_intercept_y*1e3/g: .5f} mg·sqrt(s)")
+print(f"Z Velocity Random Walk: {accel__z: .5f} m/s/sqrt(s)  {accel_wn_intercept_z*60: .5f} m/s/sqrt(hr)  {accel_wn_intercept_z*1e3/g: .5f} mg·sqrt(s)")
+
+print(f"X Bias Instability: {accel_min_x: .5f} m/s^2  {accel_min_x*3600*3600: .5f} m/hr^2  {accel_min_x*1e6/g: .5f} µg")
+print(f"Y Bias Instability: {accel_min_y: .5f} m/s^2  {accel_min_y*3600*3600: .5f} m/hr^2  {accel_min_y*1e6/g: .5f} µg")
+print(f"Z Bias Instability: {accel_min_z: .5f} m/s^2  {accel_min_z*3600*3600: .5f} m/hr^2  {accel_min_z*1e6/g: .5f} µg")
 
 print(f"X Accel Random Walk: {accel_rr_intercept_x: .5f} m/s^2/sqrt(s)")
 print(f"Y Accel Random Walk: {accel_rr_intercept_y: .5f} m/s^2/sqrt(s)")
 print(f"Z Accel Random Walk: {accel_rr_intercept_z: .5f} m/s^2/sqrt(s)")
 
-average_acc_white_noise = (accel_wn_intercept_x + accel_wn_intercept_y + accel_wn_intercept_z) / 3
+average_acc_white_noise = (accel__x + accel_wn_intercept_y + accel_wn_intercept_z) / 3
 average_acc_bias_instability = (accel_min_x + accel_min_y + accel_min_z) / 3
 average_acc_random_walk = (accel_rr_intercept_x + accel_rr_intercept_y + accel_rr_intercept_z) / 3
 
 # use worst value
-worst_accel_white_noise = np.amax([accel_wn_intercept_x, accel_wn_intercept_y, accel_wn_intercept_z])
+worst_accel_white_noise = np.amax([accel__x, accel_wn_intercept_y, accel_wn_intercept_z])
 worst_accel_random_walk = np.amax([accel_rr_intercept_x, accel_rr_intercept_y, accel_rr_intercept_z])
 
 yaml_file.write("#Accelerometer\n")
@@ -160,9 +161,9 @@ plt.loglog(period, xfit_rr(period), "y-",)
 plt.loglog(period, yfit_rr(period), "y-",)
 plt.loglog(period, zfit_rr(period), "y-", label="Random Rate fit line")
 
-plt.loglog(1.0, accel_wn_intercept_x, "ro", markersize=20)
-plt.loglog(1.0, accel_wn_intercept_y, "go", markersize=20)
-plt.loglog(1.0, accel_wn_intercept_z, "bo", markersize=20)
+plt.loglog(1.0, accel__x, "ro", markersize=20)
+plt.loglog(1.0, accel__y, "go", markersize=20)
+plt.loglog(1.0, accel__z, "bo", markersize=20)
 
 plt.loglog(3.0, accel_rr_intercept_x, "r*", markersize=20)
 plt.loglog(3.0, accel_rr_intercept_y, "g*", markersize=20)
@@ -207,13 +208,13 @@ gyro_min_y_index = np.argmin(rotation_rate[:,1])
 gyro_min_z_index = np.argmin(rotation_rate[:,2])
 
 print("GYROSCOPE:")
-print(f"X Angle Random Walk: {gyro_wn_intercept_x: .5f} deg/sqrt(s) {gyro_wn_intercept_x * 60: .5f} deg/sqrt(hr)")
-print(f"Y Angle Random Walk: {gyro_wn_intercept_y: .5f} deg/sqrt(s) {gyro_wn_intercept_y * 60: .5f} deg/sqrt(hr)")
-print(f"Z Angle Random Walk: {gyro_wn_intercept_z: .5f} deg/sqrt(s) {gyro_wn_intercept_z * 60: .5f} deg/sqrt(hr)")
+print(f"X Angle Random Walk: {gyro_wn_intercept_x: .5f} deg/sqrt(s)  {gyro_wn_intercept_x * 60: .5f} deg/sqrt(hr)")
+print(f"Y Angle Random Walk: {gyro_wn_intercept_y: .5f} deg/sqrt(s)  {gyro_wn_intercept_y * 60: .5f} deg/sqrt(hr)")
+print(f"Z Angle Random Walk: {gyro_wn_intercept_z: .5f} deg/sqrt(s)  {gyro_wn_intercept_z * 60: .5f} deg/sqrt(hr)")
 
-print(f"X Bias Instability: {gyro_min_x: .5f} deg/s {gyro_min_x*60*60: .5f} deg/hr")
-print(f"Y Bias Instability: {gyro_min_y: .5f} deg/s {gyro_min_y*60*60: .5f} deg/hr")
-print(f"Z Bias Instability: {gyro_min_z: .5f} deg/s {gyro_min_z*60*60: .5f} deg/hr")
+print(f"X Bias Instability: {gyro_min_x: .5f} deg/s  {gyro_min_x*60*60: .5f} deg/hr")
+print(f"Y Bias Instability: {gyro_min_y: .5f} deg/s  {gyro_min_y*60*60: .5f} deg/hr")
+print(f"Z Bias Instability: {gyro_min_z: .5f} deg/s  {gyro_min_z*60*60: .5f} deg/hr")
 
 print(f"X Rate Random Walk: {gyro_rr_intercept_x: .5f} deg/s/sqrt(s)")
 print(f"Y Rate Random Walk: {gyro_rr_intercept_y: .5f} deg/s/sqrt(s)")
@@ -288,5 +289,11 @@ plt.close()
 
 fig2.savefig('gyro.png', dpi=600, bbox_inches = "tight")
 
+print("AIRSIM:")
+print(f"AngularRandomWalk: {60*(gyro_wn_intercept_x+gyro_wn_intercept_y+gyro_wn_intercept_z)/3:.5f} deg/sqrt(hr)")
+print(f"GyroBiasStability: {60*60*(gyro_x+gyro_min_y+gyro_min_z)/3:.5f} deg/hr")
+print(f"VelocityRandomWalk: {1e3/g*(accel_wn_intercept_x+accel_wn_intercept_y+accel_wn_intercept_z)/3:.5f} mg·sqrt(s)")
+print(f"AccessBiasStability: {1e6/g*(accel_min_x+accel_min_y+accel_min_z)/3:.5f} µg")
+print()
 print("Writing Kalibr imu.yaml file.")
 print("Make sure to update rostopic and rate.")
