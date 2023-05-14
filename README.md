@@ -1,4 +1,4 @@
-# Allan ROS2 
+# Allan ROS2 (works with ROS humble)
 
 ROS2 package for analysing noise parameters in IMU's using allan deviation. Designed for use with Kalibr and PX4. 
 
