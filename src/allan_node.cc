@@ -5,7 +5,7 @@
 #include <ament_index_cpp/get_package_share_directory.hpp>
 
 namespace allan_ros {
-    AllanNode::AllanNode():Node("allan_node") {
+    AllanNode::AllanNode(): Node("allan_node") {
         initialize_parameters();
         configure_parameters();
         process_bag();
@@ -18,11 +18,11 @@ namespace allan_ros {
     AllanNode::~AllanNode() {}
 
     void AllanNode::initialize_parameters() {
-        this->declare_parameter("topic");
-        this->declare_parameter("bag_path");
-        this->declare_parameter("publish_rate");
-        this->declare_parameter("sample_rate");
-        this->declare_parameter("msg_type");
+        this->declare_parameter("topic", "/your/topic");
+        this->declare_parameter("bag_path", "/path/to/bag.db3");
+        this->declare_parameter("publish_rate", 10);
+        this->declare_parameter("sample_rate", 10);
+        this->declare_parameter("msg_type", "px4");
     }
 
     void AllanNode::configure_parameters() {
